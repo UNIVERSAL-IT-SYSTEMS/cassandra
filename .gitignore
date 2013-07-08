@@ -1,0 +1,6 @@
+_Store
+.idea/
+lib/
+build/
+pylib/
+src/gen-java/
