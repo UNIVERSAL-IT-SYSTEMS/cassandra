@@ -1489,7 +1489,7 @@ public class ColumnFamilyStore implements ColumnFamilyStoreMBean
                     data = filter.prune(data);
                 }
 
-                rows.add(new Row(rawRow.key, data));
+                rows.add(new Row(rawRow.key, data,rawRow.rowMeta));
                 matched++;
 
                 if (data != null)

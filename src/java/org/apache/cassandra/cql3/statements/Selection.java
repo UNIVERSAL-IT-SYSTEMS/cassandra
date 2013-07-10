@@ -41,8 +41,8 @@ public abstract class Selection
 {
     private static final Logger logger = LoggerFactory.getLogger(Selection.class);
 
-    private final List<CFDefinition.Name> columnsList;
-    private final List<ColumnSpecification> metadata;
+    public final List<CFDefinition.Name> columnsList;
+    public final List<ColumnSpecification> metadata;
     private final boolean collectTimestamps;
     private final boolean collectTTLs;
 
@@ -246,6 +246,17 @@ public abstract class Selection
         public void add(ByteBuffer v)
         {
             current.add(v);
+        }
+
+        public void addMeta(ByteBuffer v) {
+            add(v);
+            if (timestamps != null) {
+                timestamps[current.size() - 1] = -1;
+            }
+            if (ttls != null) {
+                ttls[current.size() - 1] = -1;
+            }
+
         }
 
         public void add(IColumn c)

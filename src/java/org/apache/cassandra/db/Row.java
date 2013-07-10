@@ -18,6 +18,7 @@
 package org.apache.cassandra.db;
 
 import java.io.*;
+import java.util.Collections;
 
 import org.apache.cassandra.db.filter.IDiskAtomFilter;
 import org.apache.cassandra.io.IColumnSerializer;
@@ -31,6 +32,7 @@ public class Row
 
     public final DecoratedKey key;
     public final ColumnFamily cf;
+    public final RowMeta rowMeta;
 
     public Row(DecoratedKey key, ColumnFamily cf)
     {
@@ -38,6 +40,16 @@ public class Row
         // cf may be null, indicating no data
         this.key = key;
         this.cf = cf;
+        this.rowMeta = new RowMeta(Collections.EMPTY_MAP);
+    }
+
+    public Row(DecoratedKey key, ColumnFamily cf, RowMeta rowMeta)
+    {
+        assert key != null;
+        // cf may be null, indicating no data
+        this.key = key;
+        this.cf = cf;
+        this.rowMeta = rowMeta;
     }
 
     @Override
@@ -60,12 +72,13 @@ public class Row
         {
             ByteBufferUtil.writeWithShortLength(row.key.key, dos);
             ColumnFamily.serializer.serialize(row.cf, dos, version);
+            RowMeta.serializer.serialize(row.rowMeta, dos, version);
         }
 
         public Row deserialize(DataInput dis, int version, IColumnSerializer.Flag flag, ISortedColumns.Factory factory) throws IOException
         {
             return new Row(StorageService.getPartitioner().decorateKey(ByteBufferUtil.readWithShortLength(dis)),
-                           ColumnFamily.serializer.deserialize(dis, flag, factory, version));
+                           ColumnFamily.serializer.deserialize(dis, flag, factory, version),RowMeta.serializer.deserialize(dis, version));
         }
 
         public Row deserialize(DataInput dis, int version) throws IOException
@@ -76,7 +89,7 @@ public class Row
         public long serializedSize(Row row, int version)
         {
             int keySize = row.key.key.remaining();
-            return TypeSizes.NATIVE.sizeof((short) keySize) + keySize + ColumnFamily.serializer.serializedSize(row.cf, TypeSizes.NATIVE, version);
+            return TypeSizes.NATIVE.sizeof((short) keySize) + keySize + ColumnFamily.serializer.serializedSize(row.cf, TypeSizes.NATIVE, version) + RowMeta.serializer.serializedSize(row.rowMeta, version);
         }
     }
 }
