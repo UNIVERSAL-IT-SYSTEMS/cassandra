@@ -655,7 +655,8 @@ public class SelectStatement implements CQLStatement
             firstRow = rows.get(0);
             if (!firstRow.rowMeta.isEmpty()) {
                 ColumnSpecification metaSpec = new ColumnSpecification(cfDef.cfm.ksName, cfDef.cfm.cfName, RowMeta.ROW_META_COLUMN, RowMeta.ROW_META_TYPE);
-                CFDefinition.Name cfdn = new CFDefinition.Name(metaSpec.ksName, metaSpec.cfName, metaSpec.name, CFDefinition.Name.Kind.ROW_METADATA, metaSpec.type);
+                CFDefinition.Name cfdn = new CFDefinition.Name(metaSpec.ksName, metaSpec.cfName, metaSpec.name, CFDefinition.Name.Kind.ROW_METADATA, metaSpec.type)
+                ;
                 selection.columnsList.add(cfdn);
                 selection.metadata.add(metaSpec);
             }
