@@ -63,6 +63,7 @@ public class RowMeta extends LinkedHashMap<String, String> {
 
         @Override
         public void serialize(RowMeta rowMeta, DataOutput dos, int version) throws IOException {
+            logger.debug("Row meta serializing - " + rowMeta);
             if (rowMeta == null) {
                 dos.writeInt(0);
             } else {
@@ -83,6 +84,7 @@ public class RowMeta extends LinkedHashMap<String, String> {
                 String value = dis.readUTF();
                 meta.put(key, value);
             }
+            logger.debug("Row meta deserializing - " + meta);
             return meta;
 
         }
@@ -90,6 +92,7 @@ public class RowMeta extends LinkedHashMap<String, String> {
         @Override
         public long serializedSize(RowMeta rowMeta, int version) {
             if (rowMeta == null) {
+                logger.debug("Row meta serializedSize - " + 0);
                 return TypeSizes.NATIVE.sizeof(0);
             } else {
                 int mapSize = rowMeta.size();
@@ -98,6 +101,7 @@ public class RowMeta extends LinkedHashMap<String, String> {
                     size = size + TypeSizes.NATIVE.sizeof(entry.getKey());
                     size = size + TypeSizes.NATIVE.sizeof(entry.getValue());
                 }
+                logger.debug("Row meta serializedSize - " + size);
                 return size;
             }
         }
