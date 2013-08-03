@@ -649,22 +649,7 @@ public class SelectStatement implements CQLStatement
 
     private ResultSet process(List<Row> rows, List<ByteBuffer> variables) throws InvalidRequestException
     {
-        logger.debug("Selector is -"+selection);
-        Row firstRow = null;
-        if (rows != null && rows.size() > 0) {
-            firstRow = rows.get(0);
-            if (!firstRow.rowMeta.isEmpty()) {
-                ColumnSpecification metaSpec = new ColumnSpecification(cfDef.cfm.ksName, cfDef.cfm.cfName, RowMeta.ROW_META_COLUMN, RowMeta.ROW_META_TYPE);
-                CFDefinition.Name cfdn = new CFDefinition.Name(metaSpec.ksName, metaSpec.cfName, metaSpec.name, CFDefinition.Name.Kind.ROW_METADATA, metaSpec.type)
-                ;
-                selection.columnsList.add(cfdn);
-                selection.metadata.add(metaSpec);
-            }
-        }
-
-
         Selection.ResultSetBuilder result = selection.resultSetBuilder();
-
         for (org.apache.cassandra.db.Row row : rows)
         {
             // Not columns match the query, skip
@@ -746,7 +731,7 @@ public class SelectStatement implements CQLStatement
                 }
 
                 for (ColumnGroupMap group : builder.groups())
-                    handleGroup(row,selection, result, row.key.key, keyComponents, group);
+                    handleGroup(selection, result, row.key.key, keyComponents, group);
             }
             else
             {
@@ -759,17 +744,15 @@ public class SelectStatement implements CQLStatement
                 {
                     if (name.kind == CFDefinition.Name.Kind.KEY_ALIAS)
                         result.add(keyComponents[name.position]);
-                    else if(name.kind == CFDefinition.Name.Kind.ROW_METADATA)
-                        result.addMeta(RowMeta.ROW_META_TYPE.decompose(row.rowMeta.asJson()));
                     else
                         result.add(row.cf.getColumn(name.name.key));
                 }
-
             }
         }
 
         ResultSet cqlRows = result.build();
-        orderResults(cqlRows, firstRow);
+
+        orderResults(cqlRows);
 
         // Internal calls always return columns in the comparator order, even when reverse was set
         if (isReversed)
@@ -783,20 +766,19 @@ public class SelectStatement implements CQLStatement
     /**
      * Orders results when multiple keys are selected (using IN)
      */
-    private void orderResults(ResultSet cqlRows,Row firstRow)
+    private void orderResults(ResultSet cqlRows)
     {
         // There is nothing to do if
         //   a. there are no results,
+        //   b. no ordering information where given,
         //   c. key restriction is a Range or not an IN expression
-        if (cqlRows.size() == 0 || isKeyRange || !keyIsInRelation || firstRow ==null)
+        if (cqlRows.size() == 0 || parameters.orderings.isEmpty() || isKeyRange || !keyIsInRelation)
             return;
 
-        AbstractType rowMetaComparator = firstRow.rowMeta.rowMetaComparator();;
-        if(rowMetaComparator ==null && parameters.orderings.size() ==0)
-            return;
+
         // optimization when only *one* order condition was given
         // because there is no point of using composite comparator if there is only one order condition
-        if (parameters.orderings.size() == 1 && rowMetaComparator == null)
+        if (parameters.orderings.size() == 1)
         {
             CFDefinition.Name ordering = cfDef.get(parameters.orderings.keySet().iterator().next());
             Collections.sort(cqlRows.rows, new SingleColumnComparator(getColumnPositionInResultSet(cqlRows, ordering), ordering.type));
@@ -807,9 +789,9 @@ public class SelectStatement implements CQLStatement
         // and passes collected position information and built composite comparator to CompositeComparator to do
         // an actual comparison of the CQL rows.
         List<AbstractType<?>> types = new ArrayList<AbstractType<?>>(parameters.orderings.size());
-        types.add(rowMetaComparator);
-        int[] positions = new int[parameters.orderings.size()+1];
-        int idx = 1;
+        int[] positions = new int[parameters.orderings.size()];
+
+        int idx = 0;
         for (ColumnIdentifier identifier : parameters.orderings.keySet())
         {
             CFDefinition.Name orderingColumn = cfDef.get(identifier);
@@ -854,7 +836,7 @@ public class SelectStatement implements CQLStatement
         return true;
     }
 
-    private void handleGroup(Row row,Selection selection, Selection.ResultSetBuilder result, ByteBuffer key, ByteBuffer[] keyComponents, ColumnGroupMap columns) throws InvalidRequestException
+    private void handleGroup(Selection selection, Selection.ResultSetBuilder result, ByteBuffer key, ByteBuffer[] keyComponents, ColumnGroupMap columns) throws InvalidRequestException
     {
         // Respect requested order
         result.newRow();
@@ -862,10 +844,6 @@ public class SelectStatement implements CQLStatement
         {
             switch (name.kind)
             {
-                //taken care outside
-                case ROW_METADATA:
-                    result.addMeta(RowMeta.ROW_META_TYPE.decompose(row.rowMeta.asJson()));
-                    break;
                 case KEY_ALIAS:
                     result.add(keyComponents[name.position]);
                     break;
