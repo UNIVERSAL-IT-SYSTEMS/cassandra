@@ -17,10 +17,15 @@
  */
 package org.apache.cassandra.cql3;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.Locale;
 import java.nio.ByteBuffer;
 
+import org.apache.cassandra.db.TypeSizes;
 import org.apache.cassandra.db.marshal.AbstractType;
+import org.apache.cassandra.io.IVersionedSerializer;
 import org.apache.cassandra.utils.ByteBufferUtil;
 
 import org.apache.cassandra.cql3.statements.RawSelector;
@@ -69,5 +74,40 @@ public class ColumnIdentifier implements RawSelector, Comparable<ColumnIdentifie
     public int compareTo(ColumnIdentifier other)
     {
         return key.compareTo(other.key);
+    }
+
+    @Override
+    public void serialize(RawSelector rawSelector, DataOutput out, int version) throws IOException {
+        ColumnIdentifier id = (ColumnIdentifier) rawSelector;
+        out.writeInt(0);//type
+        out.writeInt(id.key == null ? 0 : id.key.remaining());
+        ByteBufferUtil.write(id.key, out);
+    }
+
+    @Override
+    public RawSelector deserialize(DataInput in, int version) throws IOException {
+        return from(in, version);
+    }
+
+    public static ColumnIdentifier from(DataInput in, int version) throws IOException {
+        int l = in.readInt();
+        ByteBuffer buf = ByteBufferUtil.read(in, l);
+        String rawText = ByteBufferUtil.string(buf);
+        ColumnIdentifier identifier = new ColumnIdentifier(rawText, true);
+        return identifier;
+    }
+
+    @Override
+    public long serializedSize(RawSelector rawSelector, int version) {
+        ColumnIdentifier id = (ColumnIdentifier) rawSelector;
+        long size = TypeSizes.NATIVE.sizeof(0);//type
+        size += TypeSizes.NATIVE.sizeof(id.key.remaining());
+        if (id.key != null) {
+            size += TypeSizes.NATIVE.sizeof(id.key.remaining());
+            size += id.key.remaining();
+        } else {
+            size += TypeSizes.NATIVE.sizeof(0);
+        }
+        return size;
     }
 }

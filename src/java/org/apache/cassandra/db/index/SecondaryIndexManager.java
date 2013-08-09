@@ -21,6 +21,7 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
 
+import org.apache.cassandra.db.filter.ExtendedDelegatingFilter;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -492,7 +493,7 @@ public class SecondaryIndexManager
      * @param clause the query clause
      * @return the searchers needed to query the index
      */
-    private List<SecondaryIndexSearcher> getIndexSearchersForQuery(List<IndexExpression> clause)
+    public List<SecondaryIndexSearcher> getIndexSearchersForQuery(List<IndexExpression> clause)
     {
         Map<String, Set<ByteBuffer>> groupByIndexType = new HashMap<String, Set<ByteBuffer>>();
 
@@ -541,7 +542,7 @@ public class SecondaryIndexManager
             return Collections.emptyList();
 
         //We currently don't support searching across multiple index types
-        if (indexSearchers.size() > 1)
+        if (indexSearchers.size() > 1 && !(dataFilter instanceof ExtendedDelegatingFilter))
             throw new RuntimeException("Unable to search across multiple secondary index types");
 
 

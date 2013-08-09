@@ -43,8 +43,8 @@ public abstract class Selection
 
     public final List<CFDefinition.Name> columnsList;
     public final List<ColumnSpecification> metadata;
-    private final boolean collectTimestamps;
-    private final boolean collectTTLs;
+    public final boolean collectTimestamps;
+    public final boolean collectTTLs;
 
     protected Selection(List<CFDefinition.Name> columnsList, List<ColumnSpecification> metadata, boolean collectTimestamps, boolean collectTTLs)
     {
@@ -250,13 +250,6 @@ public abstract class Selection
 
         public void addMeta(ByteBuffer v) {
             add(v);
-            if (timestamps != null) {
-                timestamps[current.size() - 1] = -1;
-            }
-            if (ttls != null) {
-                ttls[current.size() - 1] = -1;
-            }
-
         }
 
         public void add(IColumn c)
