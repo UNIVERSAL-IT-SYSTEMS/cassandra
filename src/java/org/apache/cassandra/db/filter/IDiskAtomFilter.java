@@ -113,7 +113,7 @@ public interface IDiskAtomFilter
             int type = dis.readByte();
             if (type == 2)
             {
-                return ExtendedDelegatingFilter.serializer.deserialize(dis, version, comparator);
+                return ExtendedDelegatingFilter.serializer.deserialize(dis, version);
             }
             else if (type == 0)
             {

@@ -248,10 +248,6 @@ public abstract class Selection
             current.add(v);
         }
 
-        public void addMeta(ByteBuffer v) {
-            add(v);
-        }
-
         public void add(IColumn c)
         {
             current.add(isDead(c) ? null : value(c));
