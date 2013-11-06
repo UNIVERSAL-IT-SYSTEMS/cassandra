@@ -113,7 +113,7 @@ public interface IDiskAtomFilter
             int type = dis.readByte();
             if (type == 2)
             {
-                return ExtendedDelegatingFilter.serializer.deserialize(dis, version);
+                return ExtendedDelegatingFilter.deserialize(dis, version, comparator);
             }
             else if (type == 0)
             {
@@ -129,12 +129,16 @@ public interface IDiskAtomFilter
         public long serializedSize(IDiskAtomFilter filter, int version)
         {
             int size = 1;
-            if(filter instanceof ExtendedDelegatingFilter)
+            if(filter instanceof ExtendedDelegatingFilter){
+                //use the custom serializer
                 size += ExtendedDelegatingFilter.serializer.serializedSize((ExtendedDelegatingFilter) filter, version);
-            else if (filter instanceof SliceQueryFilter)
+            }
+            else if (filter instanceof SliceQueryFilter){
                 size += SliceQueryFilter.serializer.serializedSize((SliceQueryFilter)filter, version);
-            else
+            }
+            else{
                 size += NamesQueryFilter.serializer.serializedSize((NamesQueryFilter)filter, version);
+            }
             return size;
         }
     }

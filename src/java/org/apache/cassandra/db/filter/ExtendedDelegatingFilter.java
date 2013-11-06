@@ -11,6 +11,9 @@ import org.apache.cassandra.io.util.FileDataInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.DataInput;
+import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
@@ -23,13 +26,37 @@ public class ExtendedDelegatingFilter implements IDiskAtomFilter {
 
     protected static final Logger logger = LoggerFactory.getLogger(ExtendedDelegatingFilter.class);
 
+    public static final IVersionedSerializer<ExtendedDelegatingFilter> serializer;
+    public static String SERDE_CLASS = "com.tuplejump.stargate.cas.engine.EDFSerializer";
+
+    public static Method method;
+
     IDiskAtomFilter delegate;
     Map<String, List<RawSelector>> additionalClauses;
     List<Boolean> orderings;
     int limit;
     int skip;
 
-    public static IVersionedSerializer<ExtendedDelegatingFilter> serializer;
+    static {
+        try {
+            Class<?> clazz = Class.forName(SERDE_CLASS);
+            Object instance = clazz.newInstance();
+            serializer = (IVersionedSerializer<ExtendedDelegatingFilter>) instance;
+            method = instance.getClass().getMethod("deserialize", DataInput.class, int.class, AbstractType.class);
+            logger.warn("Loaded Serializer class {}", SERDE_CLASS);
+        } catch (Exception e) {
+            logger.error("Failed loading Serializer class ", e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static ExtendedDelegatingFilter deserialize(DataInput dis, int version, AbstractType comparator) throws IOException {
+        try {
+            return (ExtendedDelegatingFilter) method.invoke(serializer, dis, version, comparator);
+        } catch (Exception e) {
+            throw new IOException(e);
+        }
+    }
 
     public IDiskAtomFilter getDelegate() {
         return delegate;

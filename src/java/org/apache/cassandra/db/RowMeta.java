@@ -28,6 +28,7 @@ public class RowMeta extends LinkedHashMap<String, String> {
 
     public static final ColumnIdentifier ROW_META_COLUMN = new ColumnIdentifier("xrowmeta", false);
     public static final MapType<String, String> ROW_META_TYPE = MapType.getInstance(UTF8Type.instance, UTF8Type.instance);
+    public static final String COLUMNS = "ROW_META_COLUMNS";
     public static final String ORDER_COLUMNS = "ROW_META_ORDER_COLUMNS";
     public static final String ORDER_TYPES = "ROW_META_ORDER_TYPES";
     public static final String ORDER_REVERSE = "ROW_META_ORDER_REV";
