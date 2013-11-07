@@ -27,7 +27,7 @@ public class RowMeta extends LinkedHashMap<String, String> {
     protected static final Logger logger = LoggerFactory.getLogger(RowMeta.class);
 
     public static final ColumnIdentifier ROW_META_COLUMN = new ColumnIdentifier("xrowmeta", false);
-    public static final MapType<String, String> ROW_META_TYPE = MapType.getInstance(UTF8Type.instance, UTF8Type.instance);
+    public static final RowMetaComparator ROW_META_TYPE = RowMetaComparator.getSerDeInstance();
     public static final String COLUMNS = "ROW_META_COLUMNS";
     public static final String ORDER_COLUMNS = "ROW_META_ORDER_COLUMNS";
     public static final String ORDER_TYPES = "ROW_META_ORDER_TYPES";
@@ -47,6 +47,37 @@ public class RowMeta extends LinkedHashMap<String, String> {
 
     public RowMeta(Map<String, String> map) {
         super(map);
+    }
+
+    public static RowMeta fromJson(String json) {
+        LinkedHashMap<String, String> map = new LinkedHashMap();
+        String entries1 = json.replace("{", "");
+        entries1 = entries1.replace("}", "");
+        String[] entries = entries1.split(",");
+        for (String entryStr : entries) {
+            String[] keyVal = entryStr.split(":");
+            map.put(keyVal[0], keyVal[1]);
+        }
+        return new RowMeta(map);
+    }
+
+    public String toJson(Map<String, String> map) {
+        StringBuilder builder = new StringBuilder();
+        boolean first = true;
+        builder.append('{');
+        for (Map.Entry<String, String> entry : map.entrySet()) {
+            if (!first) {
+                builder.append(',');
+            }
+            builder.append(entry.getKey()).append(':').append(entry.getValue());
+            first = false;
+        }
+        builder.append('}');
+        return builder.toString();
+    }
+
+    protected boolean isMeta(String key) {
+        return key.equals(COLUMNS) || key.equals(ORDER_COLUMNS) || key.equals(ORDER_TYPES) || key.equals(ORDER_REVERSE);
     }
 
     public static class RowMetaSerializer implements IVersionedSerializer<RowMeta> {
@@ -111,6 +142,8 @@ public class RowMeta extends LinkedHashMap<String, String> {
         private final CQL3Type.Native[] kinds;
         private final String[] orders;
 
+        protected static MapType<String, String> mapType = MapType.getInstance(UTF8Type.instance, UTF8Type.instance);
+
         public static RowMetaComparator getInstance(RowMeta map) {
             String orderColsStr = map.get(RowMeta.ORDER_COLUMNS);
             String orderTypesStr = map.get(RowMeta.ORDER_TYPES);
@@ -122,6 +155,19 @@ public class RowMeta extends LinkedHashMap<String, String> {
                 return new RowMetaComparator(orderCols, orderTypes);
             }
         }
+
+        public static RowMetaComparator getSerDeInstance() {
+            return new RowMetaComparator();
+        }
+
+        /**
+         * Dont use anywhere else.
+         */
+        private RowMetaComparator() {
+            this.orders = null;
+            this.kinds = null;
+        }
+
 
         private RowMetaComparator(String[] orders, String[] kindStrings) {
             this.orders = orders;
@@ -150,28 +196,29 @@ public class RowMeta extends LinkedHashMap<String, String> {
 
         @Override
         public Map<String, String> compose(ByteBuffer bytes) {
-            return new RowMeta(ROW_META_TYPE.compose(bytes));
+            String json = UTF8Type.instance.compose(bytes);
+            return RowMeta.fromJson(json);
         }
 
         @Override
         public ByteBuffer decompose(Map<String, String> value) {
             RowMeta rowMeta = new RowMeta(value);
-            return RowMeta.ROW_META_TYPE.decompose(rowMeta);
+            return UTF8Type.instance.decompose(rowMeta.toJson(value));
         }
 
         @Override
         public String getString(ByteBuffer bytes) {
-            return RowMeta.ROW_META_TYPE.getString(bytes);
+            return UTF8Type.instance.getString(bytes);
         }
 
         @Override
         public ByteBuffer fromString(String source) throws MarshalException {
-            return RowMeta.ROW_META_TYPE.fromString(source);
+            return UTF8Type.instance.fromString(source);
         }
 
         @Override
         public void validate(ByteBuffer bytes) throws MarshalException {
-            throw new UnsupportedOperationException();
+            UTF8Type.instance.validate(bytes);
         }
     }
 
