@@ -49,15 +49,6 @@ public class RowMeta extends LinkedHashMap<String, String> {
         super(map);
     }
 
-    public String asJson() {
-        //try {
-        return "";
-        //} catch (IOException e) {
-        //  throw new RuntimeException(e);
-        //}
-    }
-
-
     public static class RowMetaSerializer implements IVersionedSerializer<RowMeta> {
 
         @Override
@@ -182,8 +173,6 @@ public class RowMeta extends LinkedHashMap<String, String> {
         public void validate(ByteBuffer bytes) throws MarshalException {
             throw new UnsupportedOperationException();
         }
-
-
     }
 
 }
