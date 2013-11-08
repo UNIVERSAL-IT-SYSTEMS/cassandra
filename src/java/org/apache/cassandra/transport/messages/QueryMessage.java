@@ -17,11 +17,9 @@
  */
 package org.apache.cassandra.transport.messages;
 
-import java.lang.reflect.Method;
 import java.util.UUID;
 
 import com.google.common.collect.ImmutableMap;
-import org.apache.commons.lang.StringUtils;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 
@@ -38,21 +36,6 @@ import org.apache.cassandra.utils.UUIDGen;
  */
 public class QueryMessage extends Message.Request
 {
-    static Object xQueryProcessor;
-    static Class xQueryProcessorClass;
-    static boolean xQueryProcessorInited;
-
-    static {
-        try {
-            xQueryProcessorClass = Class.forName("com.tuplejump.stargate.cas.engine.XQueryProcessor");
-            xQueryProcessor = xQueryProcessorClass.newInstance();
-            xQueryProcessorInited = true;
-        } catch (Exception e) {
-            logger.error("com.tuplejump.stargate.cas.engine.XQueryProcessor could not be initialized", e);
-            xQueryProcessorInited = false;
-        }
-    }
-
     public static final Message.Codec<QueryMessage> codec = new Message.Codec<QueryMessage>()
     {
         public QueryMessage decode(ChannelBuffer body)
@@ -86,10 +69,6 @@ public class QueryMessage extends Message.Request
 
     public Message.Response execute(QueryState state)
     {
-        boolean xcql = false;
-        if (StringUtils.containsIgnoreCase(query, "XSELECT") || StringUtils.containsIgnoreCase(query, "XCREATE")) {
-            xcql = true;
-        }
         try
         {
             UUID tracingId = null;
@@ -102,29 +81,10 @@ public class QueryMessage extends Message.Request
             if (state.traceNextQuery())
             {
                 state.createTracingSession();
-                if(xcql){
-                    Tracing.instance().begin("Execute XCQL query", ImmutableMap.of("query", query));
-                }else{
-                    Tracing.instance().begin("Execute CQL3 query", ImmutableMap.of("query", query));
-                }
+                Tracing.instance().begin("Execute CQL3 query", ImmutableMap.of("query", query));
             }
 
-            Message.Response response;
-            if (xcql) {
-                if (!xQueryProcessorInited)
-                    throw new InvalidRequestException("com.tuplejump.stargate.cas.engine.XQueryProcessor was not initliazed properly");
-                else {
-                    try {
-                        Method processM = xQueryProcessorClass.getMethod("processXQuery", String.class, ConsistencyLevel.class, QueryState.class);
-                        response = (Response) processM.invoke(null, query, consistency, state);
-                    } catch (java.lang.reflect.InvocationTargetException e) {
-                        logger.error("Error occured in executing xquery", e.getTargetException());
-                        throw new InvalidRequestException(e.getTargetException().getMessage());
-                    }
-                }
-            } else {
-                response = QueryProcessor.process(query, consistency, state);
-            }
+            Message.Response response = QueryProcessor.process(query, consistency, state);
 
             if (tracingId != null)
                 response.setTracingId(tracingId);
