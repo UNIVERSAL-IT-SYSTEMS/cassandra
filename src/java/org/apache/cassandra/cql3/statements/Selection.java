@@ -41,10 +41,10 @@ public abstract class Selection
 {
     private static final Logger logger = LoggerFactory.getLogger(Selection.class);
 
-    public final List<CFDefinition.Name> columnsList;
-    public final List<ColumnSpecification> metadata;
-    public final boolean collectTimestamps;
-    public final boolean collectTTLs;
+    private final List<CFDefinition.Name> columnsList;
+    private final List<ColumnSpecification> metadata;
+    private final boolean collectTimestamps;
+    private final boolean collectTTLs;
 
     protected Selection(List<CFDefinition.Name> columnsList, List<ColumnSpecification> metadata, boolean collectTimestamps, boolean collectTTLs)
     {

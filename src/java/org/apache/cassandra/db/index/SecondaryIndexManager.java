@@ -493,7 +493,7 @@ public class SecondaryIndexManager
      * @param clause the query clause
      * @return the searchers needed to query the index
      */
-    public List<SecondaryIndexSearcher> getIndexSearchersForQuery(List<IndexExpression> clause)
+    private List<SecondaryIndexSearcher> getIndexSearchersForQuery(List<IndexExpression> clause)
     {
         Map<String, Set<ByteBuffer>> groupByIndexType = new HashMap<String, Set<ByteBuffer>>();
 

@@ -276,7 +276,7 @@ public class CFDefinition implements Iterable<CFDefinition.Name>
     {
         public static enum Kind
         {
-            KEY_ALIAS, COLUMN_ALIAS, VALUE_ALIAS, COLUMN_METADATA, ROW_METADATA
+            KEY_ALIAS, COLUMN_ALIAS, VALUE_ALIAS, COLUMN_METADATA
         }
 
         public Name(String ksName, String cfName, ColumnIdentifier name, Kind kind, AbstractType<?> type)
