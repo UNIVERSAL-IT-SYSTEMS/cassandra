@@ -87,11 +87,7 @@ public interface IDiskAtomFilter
 
         public void serialize(IDiskAtomFilter filter, DataOutput dos, int version) throws IOException
         {
-            if (filter instanceof ExtendedDelegatingFilter) {
-                dos.writeByte(2);
-                ExtendedDelegatingFilter.serializer.serialize((ExtendedDelegatingFilter) filter, dos, version);
-            }
-            else if (filter instanceof SliceQueryFilter)
+            if (filter instanceof SliceQueryFilter)
             {
                 dos.writeByte(0);
                 SliceQueryFilter.serializer.serialize((SliceQueryFilter)filter, dos, version);
@@ -111,11 +107,7 @@ public interface IDiskAtomFilter
         public IDiskAtomFilter deserialize(DataInput dis, int version, AbstractType<?> comparator) throws IOException
         {
             int type = dis.readByte();
-            if (type == 2)
-            {
-                return ExtendedDelegatingFilter.deserialize(dis, version, comparator);
-            }
-            else if (type == 0)
+            if (type == 0)
             {
                 return SliceQueryFilter.serializer.deserialize(dis, version);
             }
@@ -129,16 +121,10 @@ public interface IDiskAtomFilter
         public long serializedSize(IDiskAtomFilter filter, int version)
         {
             int size = 1;
-            if(filter instanceof ExtendedDelegatingFilter){
-                //use the custom serializer
-                size += ExtendedDelegatingFilter.serializer.serializedSize((ExtendedDelegatingFilter) filter, version);
-            }
-            else if (filter instanceof SliceQueryFilter){
+            if (filter instanceof SliceQueryFilter)
                 size += SliceQueryFilter.serializer.serializedSize((SliceQueryFilter)filter, version);
-            }
-            else{
+            else
                 size += NamesQueryFilter.serializer.serializedSize((NamesQueryFilter)filter, version);
-            }
             return size;
         }
     }
