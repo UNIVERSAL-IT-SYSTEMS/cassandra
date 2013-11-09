@@ -279,7 +279,7 @@ public class CFDefinition implements Iterable<CFDefinition.Name>
             KEY_ALIAS, COLUMN_ALIAS, VALUE_ALIAS, COLUMN_METADATA
         }
 
-        public Name(String ksName, String cfName, ColumnIdentifier name, Kind kind, AbstractType<?> type)
+        private Name(String ksName, String cfName, ColumnIdentifier name, Kind kind, AbstractType<?> type)
         {
             this(ksName, cfName, name, kind, -1, type);
         }
