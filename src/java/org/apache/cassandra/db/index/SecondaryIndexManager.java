@@ -21,7 +21,6 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
 
-import org.apache.cassandra.db.filter.ExtendedDelegatingFilter;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -542,7 +541,7 @@ public class SecondaryIndexManager
             return Collections.emptyList();
 
         //We currently don't support searching across multiple index types
-        if (indexSearchers.size() > 1 && !(dataFilter instanceof ExtendedDelegatingFilter))
+        if (indexSearchers.size() > 1)
             throw new RuntimeException("Unable to search across multiple secondary index types");
 
 

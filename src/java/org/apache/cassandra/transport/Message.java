@@ -64,7 +64,7 @@ public abstract class Message
         CREDENTIALS  (4,  Direction.REQUEST,  CredentialsMessage.codec),
         OPTIONS      (5,  Direction.REQUEST,  OptionsMessage.codec),
         SUPPORTED    (6,  Direction.RESPONSE, SupportedMessage.codec),
-        QUERY        (7,  Direction.REQUEST,  QueryMessage2.codec),
+        QUERY        (7,  Direction.REQUEST,  QueryMessage.codec),
         RESULT       (8,  Direction.RESPONSE, ResultMessage.codec),
         PREPARE      (9,  Direction.REQUEST,  PrepareMessage.codec),
         EXECUTE      (10, Direction.REQUEST,  ExecuteMessage.codec),
